@@ -1,0 +1,24 @@
+Upstream backport: 00ba17479ff31c6825f0e6f28b965f11525e83f6
+Fix problem with loading old format of databases exports
+
+diff -ur gdbm-1.18/src/gdbmopen.c gdbm-patch/src/gdbmopen.c
+--- gdbm-1.18/src/gdbmopen.c	2018-08-03 10:46:39.000000000 +0200
++++ gdbm-patch/src/gdbmopen.c	2022-07-01 08:56:08.000000000 +0200
+@@ -168,9 +168,14 @@
+       return GDBM_BLOCK_SIZE_ERROR;
+     }
+ 
+-  if (hdr->next_block != st->st_size)
+-    /* FIXME: Should return GDBM_NEED_RECOVERY instead? */
+-    return GDBM_BAD_HEADER;
++  /* Technically speaking, the condition below should read
++         hdr->next_block != st->st_size
++     However, gdbm versions prior to commit 4e819c98 could leave
++     hdr->next_block pointing beyond current end of file. To ensure
++     backward compatibility with these versions, the condition has been
++     slackened to this: */
++  if (hdr->next_block < st->st_size)
++     return GDBM_BAD_HEADER;
+ 
+   /* Make sure dir and dir + dir_size fall within the file boundary */
+   if (!(hdr->dir > 0
