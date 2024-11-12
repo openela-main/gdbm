@@ -2,8 +2,8 @@
 
 Summary: A GNU set of database routines which use extensible hashing
 Name: gdbm
-Version: 1.19
-Release: 4%{?dist}
+Version: 1.23
+Release: 1%{?dist}
 Epoch: 1
 License: GPLv3+
 URL: http://www.gnu.org/software/gdbm/
@@ -112,6 +112,9 @@ make check
 %{_mandir}/man3/*
 
 %changelog
+* Wed Apr 03 2024 Filip Janus <fjanus@redhat.com> - 1:1.23-1
+- Update to 1.23
+
 * Mon Aug 09 2021 Mohan Boddu <mboddu@redhat.com> - 1:1.19-4
 - Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
   Related: rhbz#1991688
