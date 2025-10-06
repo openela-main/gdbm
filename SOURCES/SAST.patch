@@ -1,0 +1,63 @@
+diff -ur -x 'cscope.*' -x '*.swp' gdbm-1.23/src/recover.c gdbm_patched/src/recover.c
+--- gdbm-1.23/src/recover.c	2022-01-06 13:36:37.000000000 +0100
++++ gdbm_patched/src/recover.c	2024-07-22 13:27:36.000000000 +0200
+@@ -143,13 +143,19 @@
+   /* Fix up DBF to have the correct information for the new file. */
+   if (dbf->file_locking)
+     _gdbm_unlock_file (dbf);
+-  close (dbf->desc);
+-  free (dbf->header);
+-  free (dbf->dir);
+ 
+   _gdbm_cache_flush (dbf);
+   _gdbm_cache_free (dbf);
+ 
++// SAST patch
++// in the worst case _gdbm_cache_flush would return -1
++// but the return value is ignored, so there should not be any change in the
++// behavior or semantic of the function
++ 
++  close (dbf->desc);
++  free (dbf->header);
++  free (dbf->dir);
++
+   dbf->lock_type         = new_dbf->lock_type;
+   dbf->desc              = new_dbf->desc;
+   dbf->header            = new_dbf->header;
+diff -ur -x 'cscope.*' -x '*.swp' gdbm-1.23/tools/gdbmshell.c gdbm_patched/tools/gdbmshell.c
+--- gdbm-1.23/tools/gdbmshell.c	2022-01-09 21:29:55.000000000 +0100
++++ gdbm_patched/tools/gdbmshell.c	2024-07-22 13:51:23.000000000 +0200
+@@ -1197,6 +1197,10 @@
+ 	      else
+ 		/* TRANSLATORS: Stands for "Not Available". */
+ 		fprintf (fp, " %s", _("N/A"));
++
++	      // SAST patch
++	      // database file dbf has never been closed
++	      gdbm_close(dbf);
+ 	    }
+ 	  else if (gdbm_check_syserr (gdbm_errno))
+ 	    {
+@@ -1312,8 +1316,22 @@
+   else
+     {
+       terror (_("unexpected error code: %d"), rc);
++      // SAST patch
++      // sa and sb variable are not properly deallocated
++      // since tildexpand function and it's underlying functions calls
++      // ealloc leading to exit after unsuccessful malloc, then it not
++      // necessary to control sa and sb for NULL
++      free (sa);
++      free (sb);
+       return GDBMSHELL_ERR;
+     }
++  // SAST patch
++  // sa and sb variable are not properly deallocated
++  // since tildexpand function and it's underlying functions calls
++  // ealloc leading to exit after unsuccessful malloc, then it not
++  // necessary to control sa and sb for NULL
++  free (sa);
++  free (sb);
+   return GDBMSHELL_OK;
+ }
+ 
